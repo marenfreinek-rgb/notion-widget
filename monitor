@@ -1,0 +1,33 @@
+export default async function handler(req, res) {
+  const CMC_KEY = "851a06fb7fa94b65b77bd4d774fe2a21";
+  const FMP_KEY = "8XW6DOJlAvQvNowG9lHLuZMBt6mnC2Q5";
+
+  try {
+    const [btcRes, ethRes, goldRes, oilRes] = await Promise.all([
+      fetch("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?id=1", {
+        headers: { "X-CMC_PRO_API_KEY": CMC_KEY },
+      }),
+      fetch("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?id=1027", {
+        headers: { "X-CMC_PRO_API_KEY": CMC_KEY },
+      }),
+      fetch(`https://financialmodelingprep.com/api/v3/quote/GCUSD?apikey=${FMP_KEY}`),
+      fetch(`https://financialmodelingprep.com/api/v3/quote/CLUSD?apikey=${FMP_KEY}`),
+    ]);
+
+    const [btc, eth, gold, oil] = await Promise.all([
+      btcRes.json(),
+      ethRes.json(),
+      goldRes.json(),
+      oilRes.json(),
+    ]);
+
+    res.status(200).json({
+      btc: btc.data["1"].quote.USD.price,
+      eth: eth.data["1027"].quote.USD.price,
+      gold: gold[0]?.price ?? null,
+      oil: oil[0]?.price ?? null,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "failed to load data", details: err.message });
+  }
+}
